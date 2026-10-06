@@ -1,7 +1,7 @@
 import mlflow
 import os
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, ListConfig
 
 
 # This automatically reads in the configuration
@@ -20,8 +20,8 @@ def go(config: DictConfig):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
-        steps_to_execute = config["main"]["execute_steps"]
+        assert isinstance(config["main"]["execute_steps"], (list, ListConfig))
+        steps_to_execute = list(config["main"]["execute_steps"])
 
     # Download step
     if "download" in steps_to_execute:
@@ -67,7 +67,7 @@ def go(config: DictConfig):
 
     if "segregate" in steps_to_execute:
 
-        -= mlflow.run(
+        _= mlflow.run(
             os.path.join(root_path, "segregate"),
             "main",
             parameters={
@@ -111,7 +111,7 @@ def go(config: DictConfig):
             os.path.join(root_path, "evaluate"),
             "main",
             parameters={
-                "model_export": f"{config['random_forest_pipeline']['export_artifact']}",
+                "model_export": f"{config['random_forest_pipeline']['export_artifact']}:latest",
                 "test_data": "data_test.csv:latest"
             },
         )
